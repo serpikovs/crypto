@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  gateway:
+    build:
+      context: ./gateway
+    container_name: gateway
+    working_dir: /app
+    ports:
+      - 5000:5000
+    networks:
+      infrastructure-network:
+        ipv4_address: 10.0.0.2
+
+  provide_actual_data:
+    build:
+      context: ./provide_actual_data
+    container_name: m_provideActualData
+    working_dir: /app
+    environment:   
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_USER=${MYSQL_USER}   
+      - REDIS_URL=redis://10.0.0.32:6379 
+    ports:
+      - 5001:5001
+    networks:
+      infrastructure-network:
+        ipv4_address: 10.0.0.3
+    depends_on:
+      - gateway
+
+  get_from_cryptocompare:
+    build:
+      context: ./get_from_cryptocompare
+    container_name: m_getFromCryptocompare
+    working_dir: /app
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_DBNAME=${MYSQL_DBNAME}
+      - REDIS_URL=redis://10.0.0.32:6379      
+      - RABBIT_URL=amqp://10.0.0.30:5672
+    ports:
+      - 5002:5002
+    networks:
+      infrastructure-network:
+        ipv4_address: 10.0.0.4
+    depends_on:
+      - gateway
+
+networks:
+  infrastructure-network:
+    external: true
+    name: infrastructure_app-network
+  
+
+
